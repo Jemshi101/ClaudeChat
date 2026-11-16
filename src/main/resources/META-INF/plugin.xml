@@ -1,0 +1,207 @@
+<idea-plugin>
+    <id>in.bleuphoenix.claudechat</id>
+    <name>Claude Chat Suite</name>
+    <vendor url="https://bleuphoenix.in">BleuPhoenix</vendor>
+    <description><![CDATA[
+        <p>A Cursor-style chat for <a href="https://docs.claude.com/en/docs/claude-code">Claude Code</a> in Android
+        Studio, IntelliJ IDEA and the other JetBrains IDEs. It runs your own <code>claude</code> CLI, so your sign-in,
+        <code>CLAUDE.md</code> files, memory, skills, slash commands and MCP servers work exactly as in the terminal,
+        and Claude's changes land in the editor where you can review them one by one.</p>
+
+        <p><img src="https://raw.githubusercontent.com/Jemshi101/ClaudeChat/main/docs/screenshots/1-chat-and-review.png" alt="A chat beside the review tab" width="800"/></p>
+
+        <h3>Features</h3>
+        <ul>
+          <li><b>Chat in a tool window</b>: streaming replies with markdown and code blocks, cards for each file read,
+              edit and command, sub-agent progress, a task list and a context meter. Several chats in tabs, with
+              history (including chats started in a terminal).</li>
+          <li><b>Modes</b>: Agent, Agent with auto-edit, Plan, Ask (read-only), Debug and Auto. Permission prompts
+              offer Allow, Allow always and a diff for file edits; read-only commands inside the project can run
+              without asking.</li>
+          <li><b>Plans</b> open as editable documents with flowcharts and a to-do list; <b>Build</b> when they're
+              right.</li>
+          <li><b>Review every change</b> in a Claude Changes tab and right in the editor, accepting or rejecting each
+              one (F7 / Shift+F7 to move between them), with checkpoints to undo a whole turn.</li>
+          <li><b>Context</b>: the open file, <code>@</code> files and folders, selected lines, pasted or dropped
+              images, model and effort pickers, <code>/</code> commands and skills, queued messages.</li>
+          <li><b>Edit with Claude</b>: describe a change to the selected code and review it in place.</li>
+          <li><b>Right-click → Claude</b> in the editor and project tree: Explain, Find and Fix Bugs, Refactor and
+              Write Tests for the selection, a file or a folder. In the Run console and Logcat, send the output to
+              Claude to explain and fix.</li>
+          <li><b>Apply</b> a code block from a reply to its file, reviewed in the editor.</li>
+          <li><b>Fix with Claude</b> on Alt+Enter for an error or warning, and a <b>commit message</b> written by
+              Claude from the changes you're committing.</li>
+          <li><b>Claude Code settings</b>: edit permission rules and environment variables for the project or all
+              projects, next to the MCP servers.</li>
+          <li><b>Notifications</b> when Claude finishes or needs you while you're in another window.</li>
+        </ul>
+
+        <p><img src="https://raw.githubusercontent.com/Jemshi101/ClaudeChat/main/docs/screenshots/2-plan.png" alt="A plan with its flowchart" width="800"/></p>
+
+        <h3>Getting started</h3>
+        <ol>
+          <li>Install the Claude Code CLI 2.1 or later: <code>curl -fsSL https://claude.ai/install.sh | bash</code>
+              on macOS and Linux, <code>irm https://claude.ai/install.ps1 | iex</code> in PowerShell on Windows, or
+              <code>npm install -g @anthropic-ai/claude-code</code>.</li>
+          <li>Open the <b>Claude</b> tool window on the right. If Claude Code isn't signed in yet, sign in from the
+              chat.</li>
+          <li>Type a message. Pick the mode under the message box; <b>Cmd+Shift+J</b> (Ctrl+Shift+; on Windows and
+              Linux) jumps to the chat with the selected code attached.</li>
+          <li>Options are in <b>Settings | Tools | Claude Chat Suite</b>: the CLI's path if it isn't found on the
+              <code>PATH</code>, the default model and mode, notifications, MCP servers and more.</li>
+        </ol>
+
+        <p>Not made by or affiliated with Anthropic. Open source under GPL-3.0:
+        <a href="https://github.com/Jemshi101/ClaudeChat">github.com/Jemshi101/ClaudeChat</a>.</p>
+    ]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+    <!-- Android Studio's Logcat: the Claude menu in its right-click menu. -->
+    <depends optional="true" config-file="claudechat-android.xml">org.jetbrains.android</depends>
+    <!-- The commit message button, added where the commit UI (intellij.platform.vcs.impl) is loaded. -->
+    <depends optional="true" config-file="claudechat-vcs.xml">com.intellij.modules.vcs</depends>
+    <!-- Adds nothing: from 2026.3 the Version Control plugin holds intellij.platform.vcs, and the plugin verifier only
+         finds that module's classes through a dependency on the plugin itself. -->
+    <depends optional="true" config-file="claudechat-vcs-plugin.xml">com.intellij.platform.vcs</depends>
+
+    <!-- Compose and Jewel ship with the IDE as product modules. -->
+    <dependencies>
+        <module name="intellij.platform.compose"/>
+        <module name="intellij.libraries.compose.runtime.desktop"/>
+        <module name="intellij.libraries.compose.foundation.desktop"/>
+        <module name="intellij.libraries.skiko"/>
+        <module name="intellij.platform.jewel.foundation"/>
+        <module name="intellij.platform.jewel.ui"/>
+        <module name="intellij.platform.jewel.ideLafBridge"/>
+        <module name="intellij.platform.jewel.markdown.core"/>
+        <module name="intellij.platform.jewel.markdown.ideLafBridgeStyling"/>
+        <module name="intellij.platform.jewel.markdown.extensions.gfmStrikethrough"/>
+        <module name="intellij.platform.jewel.markdown.extensions.autolink"/>
+        <!-- Version control's API (commit message box, changes): part of the platform in 2026.2, in the bundled
+             Version Control plugin from 2026.3. -->
+        <module name="intellij.platform.vcs"/>
+    </dependencies>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <notificationGroup id="Claude Chat: Needs You" displayType="STICKY_BALLOON"/>
+        <actionPromoter implementation="in.bleuphoenix.claudechat.review.ChangeNavigationPromoter"/>
+        <notificationGroup id="Claude Chat: Finished" displayType="BALLOON"/>
+        <toolWindow id="Claude"
+                    anchor="right"
+                    icon="/icons/claudeChat.svg"
+                    factoryClass="in.bleuphoenix.claudechat.ui.ClaudeChatToolWindowFactory"/>
+        <intentionAction>
+            <className>in.bleuphoenix.claudechat.ide.FixWithClaudeIntention</className>
+            <category>Claude</category>
+            <skipBeforeAfter>true</skipBeforeAfter>
+        </intentionAction>
+        <fileEditorProvider implementation="in.bleuphoenix.claudechat.plan.PlanEditorProvider"/>
+        <fileEditorProvider implementation="in.bleuphoenix.claudechat.review.ReviewEditorProvider"/>
+        <applicationConfigurable id="in.bleuphoenix.claudechat.settings"
+                                 parentId="tools"
+                                 displayName="Claude Chat Suite"
+                                 instance="in.bleuphoenix.claudechat.settings.ClaudeChatConfigurable"/>
+        <projectConfigurable id="in.bleuphoenix.claudechat.settings.mcp"
+                             parentId="in.bleuphoenix.claudechat.settings"
+                             displayName="MCP Servers"
+                             instance="in.bleuphoenix.claudechat.settings.McpServersConfigurable"/>
+        <projectConfigurable id="in.bleuphoenix.claudechat.settings.claudeCode"
+                             parentId="in.bleuphoenix.claudechat.settings"
+                             displayName="Claude Code Settings"
+                             instance="in.bleuphoenix.claudechat.settings.ClaudeCodeSettingsConfigurable"/>
+    </extensions>
+
+    <actions>
+        <action id="ClaudeChat.AskAboutSelection"
+                class="in.bleuphoenix.claudechat.ide.AskClaudeAboutSelectionAction"
+                text="Ask Claude About Selection"
+                description="Add the selected code and its location to the Claude chat"
+                icon="/icons/claudeChat.svg">
+            <add-to-group group-id="EditorPopupMenu" anchor="first"/>
+        </action>
+        <action id="ClaudeChat.InlineEdit"
+                class="in.bleuphoenix.claudechat.edit.InlineEditAction"
+                text="Edit with Claude…"
+                description="Describe a change to the selected code, or code to add at the caret, and review Claude's edit in place"
+                icon="/icons/claudeChat.svg">
+            <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="ClaudeChat.AskAboutSelection"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="control alt BACK_SLASH"/>
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta alt K" replace-all="true"/>
+            <keyboard-shortcut keymap="Mac OS X" first-keystroke="meta alt K" replace-all="true"/>
+        </action>
+        <group id="ClaudeChat.Menu" text="Claude" popup="true" icon="/icons/claudeChat.svg"
+               description="Ask Claude about the selected code, file or folder">
+            <action id="ClaudeChat.Explain" class="in.bleuphoenix.claudechat.ide.ExplainWithClaudeAction"
+                    text="Explain" description="Ask Claude to explain the selected code, file or folder"/>
+            <action id="ClaudeChat.FindBugs" class="in.bleuphoenix.claudechat.ide.FindBugsWithClaudeAction"
+                    text="Find and Fix Bugs" description="Ask Claude to look for bugs in the selected code, file or folder and fix them"/>
+            <action id="ClaudeChat.Refactor" class="in.bleuphoenix.claudechat.ide.RefactorWithClaudeAction"
+                    text="Refactor" description="Ask Claude to make the selected code, file or folder easier to read without changing what it does"/>
+            <action id="ClaudeChat.WriteTests" class="in.bleuphoenix.claudechat.ide.WriteTestsWithClaudeAction"
+                    text="Write Tests" description="Ask Claude to write unit tests for the selected code, file or folder"/>
+            <separator/>
+            <action id="ClaudeChat.NewChatAboutThis" class="in.bleuphoenix.claudechat.ide.NewChatAboutThisAction"
+                    text="New Chat About This" description="Start a Claude chat with the selected code, files or folders attached"/>
+            <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="ClaudeChat.InlineEdit"/>
+            <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="NewGroup"/>
+        </group>
+        <group id="ClaudeChat.ConsoleMenu" text="Claude" popup="true" icon="/icons/claudeChat.svg"
+               description="Send this output to Claude">
+            <action id="ClaudeChat.ExplainConsole" class="in.bleuphoenix.claudechat.ide.ExplainConsoleOutputAction"
+                    text="Explain and Fix" description="Send the selected output (or its last lines) to Claude to explain it and fix what it shows"/>
+            <action id="ClaudeChat.AddConsole" class="in.bleuphoenix.claudechat.ide.AddConsoleOutputAction"
+                    text="Add to Chat" description="Add the selected output (or its last lines) to the Claude chat's message"/>
+            <add-to-group group-id="ConsoleEditorPopupMenu" anchor="first"/>
+        </group>
+        <action id="ClaudeChat.FocusChat"
+                class="in.bleuphoenix.claudechat.ide.FocusChatAction"
+                text="Focus Claude Chat"
+                description="Move to the Claude chat's message box, adding the selected code to its context"
+                icon="/icons/claudeChat.svg">
+            <keyboard-shortcut keymap="$default" first-keystroke="control shift SEMICOLON"/>
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta shift J" replace-all="true"/>
+            <keyboard-shortcut keymap="Mac OS X" first-keystroke="meta shift J" replace-all="true"/>
+        </action>
+        <action id="ClaudeChat.ToggleActivity"
+                class="in.bleuphoenix.claudechat.ide.ToggleActivityAction"
+                text="Toggle Claude Chat Activity"
+                description="Open or close the strip above the chat's message box: tasks, background work, changed files and commands"
+                icon="/icons/claudeChat.svg">
+            <keyboard-shortcut keymap="$default" first-keystroke="control alt QUOTE"/>
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta alt J" replace-all="true"/>
+            <keyboard-shortcut keymap="Mac OS X" first-keystroke="meta alt J" replace-all="true"/>
+        </action>
+        <action id="ClaudeChat.NextChange"
+                class="in.bleuphoenix.claudechat.review.NextClaudeChangeAction"
+                text="Next Claude Change"
+                description="Go to the next change Claude made that's waiting for review, then on to the next file">
+            <keyboard-shortcut keymap="$default" first-keystroke="F7"/>
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="F7"/>
+            <keyboard-shortcut keymap="Mac OS X" first-keystroke="F7"/>
+        </action>
+        <action id="ClaudeChat.PreviousChange"
+                class="in.bleuphoenix.claudechat.review.PreviousClaudeChangeAction"
+                text="Previous Claude Change"
+                description="Go to the previous change Claude made that's waiting for review, then back to the previous file">
+            <keyboard-shortcut keymap="$default" first-keystroke="shift F7"/>
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="shift F7"/>
+            <keyboard-shortcut keymap="Mac OS X" first-keystroke="shift F7"/>
+        </action>
+        <action id="ClaudeChat.AcceptChange"
+                class="in.bleuphoenix.claudechat.review.AcceptClaudeChangeAction"
+                text="Accept Claude Change"
+                description="Accept the change Claude made at the caret and go to the next one">
+            <keyboard-shortcut keymap="$default" first-keystroke="control Y"/>
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta Y"/>
+            <keyboard-shortcut keymap="Mac OS X" first-keystroke="meta Y"/>
+        </action>
+        <action id="ClaudeChat.RejectChange"
+                class="in.bleuphoenix.claudechat.review.RejectClaudeChangeAction"
+                text="Reject Claude Change"
+                description="Reject the change Claude made at the caret, putting the old lines back, and go to the next one">
+            <keyboard-shortcut keymap="$default" first-keystroke="control N"/>
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta N"/>
+            <keyboard-shortcut keymap="Mac OS X" first-keystroke="meta N"/>
+        </action>
+    </actions>
+</idea-plugin>

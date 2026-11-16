@@ -1,0 +1,12 @@
+<idea-plugin>
+    <actions>
+        <group id="ClaudeChat.LogcatMenu" text="Claude" popup="true" icon="/icons/claudeChat.svg"
+               description="Send these Logcat lines to Claude">
+            <action id="ClaudeChat.ExplainLogcat" class="in.bleuphoenix.claudechat.ide.ExplainLogcatAction"
+                    text="Explain and Fix" description="Send the selected Logcat lines (or the last ones) to Claude to explain them and fix what they show"/>
+            <action id="ClaudeChat.AddLogcat" class="in.bleuphoenix.claudechat.ide.AddLogcatAction"
+                    text="Add to Chat" description="Add the selected Logcat lines (or the last ones) to the Claude chat's message"/>
+            <add-to-group group-id="Logcat.PopupActions" anchor="first"/>
+        </group>
+    </actions>
+</idea-plugin>

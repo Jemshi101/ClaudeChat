@@ -1,0 +1,25 @@
+Claude Chat Suite
+Copyright (C) 2026 Jemsheer K D (BleuPhoenix, https://bleuphoenix.in)
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation, version 3 of the License (see LICENSE).
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+Additional terms under section 7(b) of the GNU GPL version 3
+------------------------------------------------------------
+
+Anyone who conveys this program or a work based on it (a fork, a modified
+version, or a plugin built from its code) must preserve this author attribution:
+
+    Based on Claude Chat Suite by Jemsheer K D (BleuPhoenix, https://bleuphoenix.in)
+    https://github.com/Jemshi101/ClaudeChat
+
+in the work's NOTICE or README file, and, where the work has one, in its
+description or "About" text (for a JetBrains plugin, the plugin description).
+
+"Claude" is a trademark of Anthropic, PBC. This project is not made by or
+affiliated with Anthropic.

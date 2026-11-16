@@ -1,0 +1,4 @@
+# Keep each wrapper script in the line endings its shell needs, whatever the checkout platform.
+gradlew text eol=lf
+*.bat text eol=crlf
+*.jar binary

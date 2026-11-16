@@ -1,0 +1,11 @@
+<idea-plugin>
+    <actions>
+        <action id="ClaudeChat.GenerateCommitMessage"
+                class="in.bleuphoenix.claudechat.vcs.GenerateCommitMessageAction"
+                text="Generate Commit Message with Claude"
+                description="Have Claude write a commit message for the changes ticked for commit, guided by any draft in the box"
+                icon="/icons/claudeChat.svg">
+            <add-to-group group-id="Vcs.MessageActionGroup" anchor="first"/>
+        </action>
+    </actions>
+</idea-plugin>
