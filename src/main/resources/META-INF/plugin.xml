@@ -38,6 +38,8 @@
 
         <p><img src="https://raw.githubusercontent.com/Jemshi101/ClaudeChat/main/docs/screenshots/2-plan.png" alt="A plan with its flowchart" width="800"/></p>
 
+        <p><img src="https://raw.githubusercontent.com/Jemshi101/ClaudeChat/main/docs/screenshots/5-debug-and-fix.png" alt="Debug mode with reproduction steps beside a Fix with Claude request and its Apply link" width="800"/></p>
+
         <h3>Getting started</h3>
         <ol>
           <li>Install the Claude Code CLI 2.1 or later: <code>curl -fsSL https://claude.ai/install.sh | bash</code>

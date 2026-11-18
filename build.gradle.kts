@@ -9,7 +9,7 @@ plugins {
 }
 
 group = "in.bleuphoenix.claudechat"
-version = "2.51.0"
+version = "2.51.1"
 
 repositories {
     mavenCentral()
@@ -64,6 +64,8 @@ intellijPlatform {
         }
         changeNotes = recentNotes("""
             <ul>
+              <li>2.51.1: A new screenshot in the description: Debug mode with its reproduction steps, beside Fix with
+                  Claude and Apply on a code block.</li>
               <li>2.51.0: The same failure several times in a row shows once with a count: a command Claude retries
                   that keeps failing with the same input, or a repeated error, appears as its last try marked 3×.</li>
               <li>2.50.0: New settings: Add to system prompt (your own instructions for every chat), Turn limit (the
