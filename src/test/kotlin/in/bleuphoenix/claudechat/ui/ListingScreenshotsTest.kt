@@ -13,6 +13,9 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import com.google.gson.JsonParser
 import `in`.bleuphoenix.claudechat.cli.CliCatalog
+import `in`.bleuphoenix.claudechat.cli.Effort
+import `in`.bleuphoenix.claudechat.ide.CodeProblem
+import `in`.bleuphoenix.claudechat.ide.FixWithClaudeIntention
 import `in`.bleuphoenix.claudechat.cli.ModelOption
 import `in`.bleuphoenix.claudechat.cli.SlashCommand
 import `in`.bleuphoenix.claudechat.ide.FileMatch
@@ -68,7 +71,78 @@ class ListingScreenshotsTest {
         }
     }
 
+    @Test
+    fun `debug mode and fix with claude`() = shoot("5-debug-and-fix", dark = true) {
+        Panels(chat = { ChatScreen(debugChat(), NoActions) }) { ChatScreen(fixChat(), NoActions) }
+    }
+
     // ---- Sample chats ----
+
+    private val sampleModels = listOf(
+        ModelOption(CliCatalog.DEFAULT, "Default (recommended)", "Best for everyday, complex tasks", "claude-opus-5-5", Effort.LEVELS),
+        ModelOption("opus", "Opus", "Most capable for complex work", "claude-opus-5-5", Effort.LEVELS),
+        ModelOption("sonnet", "Sonnet", "Most efficient for simpler tasks", "claude-sonnet-5-5", Effort.LEVELS),
+    )
+
+    private fun debugChat(): ChatState {
+        val state = ChatState()
+        val reducer = ChatEventReducer(state)
+        state.mode = PermissionMode.CHOICES.first { it.id == DebugMode.ID }
+        reducer.addUserMessage("After midnight the forecast still shows yesterday's date until I restart the app")
+        repeat(3) { failedTool(reducer, "d$it", "Bash", """{"command":"adb logcat -d -s ClaudeDebug"}""", "adb: no devices/emulators found") }
+        state.items += AssistantTextItem(
+            state.newKey(),
+            """
+            No device is connected, so I can't read the logs yet. Likely causes:
+
+            1. **`ForecastCache` keeps the forecast across midnight**: its 30-minute lifetime doesn't care about the date
+            2. `ForecastScreen` formats "today" once, when the screen is created
+            3. The device's time zone changed while the app was running
+
+            I added `ClaudeDebug` logging to `ForecastCache.get` and `ForecastScreen` to tell them apart.
+
+            <reproduction_steps>
+            1. Connect a device and open the forecast screen at 23:55
+            2. Leave the app open until 00:05
+            3. Pull down to refresh and check the date
+            </reproduction_steps>
+            """.trimIndent(),
+        )
+        reducer.handle(json("""{"type":"result","subtype":"success","duration_ms":38000,"total_cost_usd":0.18}"""))
+        state.models = sampleModels
+        state.effort = "high"
+        state.context = ContextUsage(used = 64_000, window = 1_000_000)
+        return state
+    }
+
+    private fun fixChat(): ChatState {
+        val state = ChatState()
+        val reducer = ChatEventReducer(state)
+        val path = "src/main/kotlin/weather/ForecastRepository.kt"
+        reducer.addUserMessage(
+            FixWithClaudeIntention.prompt(path, listOf(CodeProblem(27, "Type mismatch: inferred type is Forecast? but Forecast was expected", true))),
+            listOf(FileAttachment("f1", path, lines = 27..27)),
+        )
+        tool(reducer, "f2", "Read", """{"file_path":"$path"}""")
+        state.items += AssistantTextItem(
+            state.newKey(),
+            """
+            `cache.get()` returns null once the cached forecast expires, but `latest()` promises a `Forecast`. Fall back
+            to the network instead of forcing it with `!!`:
+
+            ```kotlin $path
+            suspend fun latest(): Forecast =
+                cache.get() ?: api.forecast().also(cache::put)
+            ```
+
+            This also fills the cache after each fetch, which the caching plan needed anyway.
+            """.trimIndent(),
+        )
+        reducer.handle(json("""{"type":"result","subtype":"success","duration_ms":12000,"total_cost_usd":0.05}"""))
+        state.models = sampleModels
+        state.context = ContextUsage(used = 31_000, window = 1_000_000)
+        return state
+    }
 
     private fun reviewedChat(): ChatState {
         val state = ChatState()
@@ -81,7 +155,7 @@ class ListingScreenshotsTest {
             """
             Done. `main` now reads **--units** and passes it to a small `Formatter`:
 
-            ```kotlin
+            ```kotlin src/main/kotlin/weather/Main.kt
             val units = Units.parse(args.valueAfter("--units") ?: "metric")
             println(Formatter(units).temperature(reading))
             ```
@@ -98,6 +172,8 @@ class ListingScreenshotsTest {
         state.review = review
         state.editedFiles += review.files.map { it.path }
         state.context = ContextUsage(used = 86_000, window = 1_000_000)
+        state.models = sampleModels
+        state.effort = "high"
         return state
     }
 
@@ -192,6 +268,11 @@ class ListingScreenshotsTest {
     private fun tool(reducer: ChatEventReducer, id: String, name: String, input: String) {
         reducer.handle(json("""{"type":"assistant","message":{"id":"m$id","content":[{"type":"tool_use","id":"$id","name":"$name","input":$input}]}}"""))
         reducer.handle(json("""{"type":"user","message":{"content":[{"type":"tool_result","tool_use_id":"$id","content":"ok"}]}}"""))
+    }
+
+    private fun failedTool(reducer: ChatEventReducer, id: String, name: String, input: String, error: String) {
+        reducer.handle(json("""{"type":"assistant","message":{"id":"m$id","content":[{"type":"tool_use","id":"$id","name":"$name","input":$input}]}}"""))
+        reducer.handle(json("""{"type":"user","message":{"content":[{"type":"tool_result","tool_use_id":"$id","content":"$error","is_error":true}]}}"""))
     }
 
     private fun json(text: String) = JsonParser.parseString(text).asJsonObject

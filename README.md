@@ -22,6 +22,8 @@ runs your local `claude` CLI in stream-json mode and draws the conversation in a
 | Plans with flowcharts | Tasks, changes and permission prompts |
 |---|---|
 | ![A plan](docs/screenshots/2-plan.png) | ![Tasks and a permission prompt](docs/screenshots/3-tasks-and-permission.png) |
+| **Debug mode, and Fix with Claude with Apply** | **Light theme** |
+| ![Debug mode with reproduction steps beside a Fix with Claude request](docs/screenshots/5-debug-and-fix.png) | ![The chat and a plan in the light theme](docs/screenshots/4-light.png) |
 
 ## Getting started
 
