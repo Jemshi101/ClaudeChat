@@ -111,6 +111,9 @@ fun Composer(state: ChatState, actions: ChatActions) {
         if (state.queued.isNotEmpty()) {
             Box(Modifier.padding(bottom = 6.dp)) { QueuedMessages(state.queued, actions) }
         }
+        state.context?.takeIf { it.isLong && !state.busy && !state.longChatHintDismissed }?.let { usage ->
+            Box(Modifier.padding(bottom = 6.dp)) { LongChatBar(usage, actions) { state.longChatHintDismissed = true } }
+        }
         // A message typed while Claude works: wait for it, send it now, or stop Claude and send it.
         if (state.busy && state.editing == null && state.input.text.isNotBlank()) {
             Box(Modifier.padding(bottom = 6.dp)) { WhileWorkingChoices(actions) }
@@ -236,7 +239,7 @@ fun Composer(state: ChatState, actions: ChatActions) {
                 EffortSelector(state.models, state.model, state.effort, actions)
                 Spacer(Modifier.weight(1f))
                 if (state.mcpServers.isNotEmpty()) McpIndicator(state.mcpServers, actions)
-                state.context?.let { ContextMeter(it) }
+                state.context?.let { ContextMeter(it, actions) }
                 SendButton(busy = state.busy, canSend = state.input.text.isNotBlank(), actions = actions)
             }
         }

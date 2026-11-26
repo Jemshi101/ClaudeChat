@@ -80,6 +80,13 @@ class ClaudeCliTest {
     }
 
     @Test
+    fun `an auto-compact window is passed only when set`() {
+        val args = ClaudeCli.commandLine("/bin/claude", "/tmp", null, null, null, autoCompactWindow = 300_000).parametersList.list
+        assertEquals("300000", args[args.indexOf("--autocompact") + 1])
+        assertFalse("--autocompact" in ClaudeCli.commandLine("/bin/claude", "/tmp", null, null, null, autoCompactWindow = 0).parametersList.list)
+    }
+
+    @Test
     fun `forking resumes a copy that ends at a message`() {
         val args = ClaudeCli.commandLine("/bin/claude", "/work", "session-1", null, null, forkAtMessage = "uuid-7").parametersList.list
         val at = args.indexOf("--resume-session-at")

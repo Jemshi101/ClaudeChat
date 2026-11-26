@@ -170,9 +170,36 @@ class ChatEventReducer(
                 onAgentEvent(event)
             }
             "background_tasks_changed" -> onBackgroundList(event)
-            "status" -> if (event.str("status") == "requesting") busy("Thinking…")
+            "status" -> {
+                when (event.str("status")) {
+                    "requesting" -> busy("Thinking…")
+                    "compacting" -> busy("Compacting the conversation…")
+                }
+                if (event.str("compact_result") == "failed") {
+                    val reason = event.str("compact_error")?.trim()?.takeIf { it.isNotEmpty() }
+                    addNotice("Couldn't compact the conversation${reason?.let { ": $it" } ?: "."}", isError = true)
+                }
+            }
+            "compact_boundary" -> onCompacted(event)
             "permission_denied" -> addNotice(event.str("message") ?: "Permission denied", isError = true)
         }
+    }
+
+    /**
+     * The CLI replaced the conversation so far with a summary. The stream reports `compact_metadata` with snake_case
+     * keys; session transcripts (see TranscriptReplay) store `compactMetadata` in camelCase.
+     */
+    private fun onCompacted(event: JsonObject) {
+        flush()
+        val stream = event.obj("compact_metadata")
+        val metadata = stream ?: event.obj("compactMetadata") ?: JsonObject()
+        fun tokens(snake: String, camel: String) =
+            metadata.get(if (stream != null) snake else camel)?.takeIf { it.isJsonPrimitive }?.asLong
+        val before = tokens("pre_tokens", "preTokens") ?: state.context?.used ?: 0L
+        val after = tokens("post_tokens", "postTokens")
+        state.items += CompactedItem(state.newKey(), metadata.str("trigger") != "manual", before, after)
+        after?.let { state.context = ContextUsage(it, state.context?.window) }
+        state.longChatHintDismissed = false
     }
 
     /** The model each message runs on; follows a `/model` typed in the chat too. */

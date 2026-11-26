@@ -2,6 +2,7 @@ package `in`.bleuphoenix.claudechat.history
 
 import `in`.bleuphoenix.claudechat.ui.AssistantTextItem
 import `in`.bleuphoenix.claudechat.ui.ChatState
+import `in`.bleuphoenix.claudechat.ui.CompactedItem
 import `in`.bleuphoenix.claudechat.ui.FileAttachment
 import `in`.bleuphoenix.claudechat.ui.ToolItem
 import `in`.bleuphoenix.claudechat.ui.ToolStatus
@@ -94,6 +95,24 @@ class ChatHistoryTest {
         )
         assertEquals(listOf("Main.kt"), users.single().attachments.map { (it as FileAttachment).path })
         assertTrue((state.items.last() as AssistantTextItem).text.contains("blue"))
+    }
+
+    @Test
+    fun `a compacted chat replays with a divider, not the summary as a message`() {
+        val file = transcript(
+            "compacted", 1_000,
+            user("Add caching"),
+            """{"type":"assistant","message":{"id":"m1","role":"assistant","content":[{"type":"text","text":"Done."}]}}""",
+            """{"type":"system","subtype":"compact_boundary","content":"Conversation compacted","compactMetadata":{"trigger":"auto","preTokens":412000}}""",
+            """{"type":"user","isCompactSummary":true,"message":{"role":"user","content":"This session is being continued from a previous conversation."}}""",
+            user("Now the tests"),
+        )
+        val state = ChatState().also { TranscriptReplay.replay(ChatHistory.load(file), it) }
+        assertEquals(listOf("Add caching", "Now the tests"), state.items.filterIsInstance<UserItem>().map { it.text })
+        val divider = state.items.filterIsInstance<CompactedItem>().single()
+        assertTrue(divider.automatic)
+        assertEquals(412_000L, divider.before)
+        assertEquals(state.items.indexOf(divider) + 1, state.items.indexOfFirst { it is UserItem && it.text == "Now the tests" })
     }
 
     @Test

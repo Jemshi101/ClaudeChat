@@ -72,6 +72,7 @@ import `in`.bleuphoenix.claudechat.ide.FileLink
 import `in`.bleuphoenix.claudechat.ui.AssistantTextItem
 import `in`.bleuphoenix.claudechat.ui.ChangesItem
 import `in`.bleuphoenix.claudechat.ui.ChatItem
+import `in`.bleuphoenix.claudechat.ui.CompactedItem
 import `in`.bleuphoenix.claudechat.ui.DebugMode
 import `in`.bleuphoenix.claudechat.ui.LoginItem
 import `in`.bleuphoenix.claudechat.ui.LoginStatus
@@ -112,6 +113,7 @@ fun ChatItemView(
         is PlanItem -> PlanCard(item, actions)
         is ChangesItem -> ChangesCard(item, actions)
         is NoticeItem -> Notice(item, repeats)
+        is CompactedItem -> CompactedDivider(item)
         is LoginItem -> LoginCard(item, actions)
         is TurnMetaItem -> TurnMeta(item)
     }
@@ -605,6 +607,37 @@ private fun Notice(item: NoticeItem, repeats: Int = 1) {
     } else {
         Text(item.text, style = smallStyle(), color = colors.muted, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
     }
+}
+
+/** A line across the chat where the CLI compacted it, with the context before and after; explained on hover. */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun CompactedDivider(item: CompactedItem) {
+    val colors = chatColors()
+    Tooltip({
+        Text(
+            "Claude now works from a summary of the conversation above, which stays here for you to read." +
+                if (item.automatic) " Claude Code compacts on its own when a chat gets long; when is set in Settings." else "",
+            modifier = Modifier.widthIn(max = 360.dp),
+        )
+    }) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Box(Modifier.weight(1f).height(1.dp).background(colors.border))
+            Text(compactedLabel(item), style = smallStyle(), color = colors.muted, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Box(Modifier.weight(1f).height(1.dp).background(colors.border))
+        }
+    }
+}
+
+/** "Context compacted automatically · 412k → 38k tokens". */
+internal fun compactedLabel(item: CompactedItem): String {
+    val how = if (item.automatic) "Context compacted automatically" else "Context compacted"
+    val sizes = when {
+        item.after != null -> "${compactCount(item.before)} → ${compactCount(item.after)} tokens"
+        item.before > 0 -> "was ${compactCount(item.before)} tokens"
+        else -> null
+    }
+    return listOfNotNull(how, sizes).joinToString(" · ")
 }
 
 /** "3×" on the last of a run of the same failure, explained on hover. */

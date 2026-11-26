@@ -99,6 +99,9 @@ class ChatState {
     /** How full the context window is, from the latest reply; null until the first one. */
     var context by mutableStateOf<ContextUsage?>(null)
 
+    /** The long-chat bar was closed; it comes back after the next compaction, once the chat is long again. */
+    var longChatHintDismissed by mutableStateOf(false)
+
     /** Which project guides Claude gets instead of CLAUDE.md, for the welcome screen; empty when CLAUDE.md is used. */
     var instructionsNote by mutableStateOf("")
 
@@ -246,6 +249,13 @@ class BackgroundTask(val id: String, val kind: String, val description: String, 
 /** Tokens in the conversation so far, and the model's context window when known. */
 data class ContextUsage(val used: Long, val window: Long?) {
     val fraction: Float? get() = window?.takeIf { it > 0 }?.let { (used.toDouble() / it).toFloat().coerceIn(0f, 1f) }
+
+    /** Long enough that compacting or a new chat would help: [LONG_CHAT_TOKENS], or half a smaller window. */
+    val isLong: Boolean get() = used >= minOf(LONG_CHAT_TOKENS, (window ?: Long.MAX_VALUE) / 2)
+
+    companion object {
+        const val LONG_CHAT_TOKENS = 200_000L
+    }
 }
 
 class PermissionItem(
@@ -309,6 +319,13 @@ class PlanItem(
 class ChangesItem(key: String, val paths: List<String>, val review: ReviewState) : ChatItem(key)
 
 class NoticeItem(key: String, val text: String, val isError: Boolean) : ChatItem(key)
+
+/**
+ * The CLI compacted the conversation here: Claude now works from a summary of what came before. [automatic] when the
+ * CLI did it on its own (near its auto-compact window, or while idle) rather than for a typed `/compact`; [after] is
+ * null when the CLI didn't report it.
+ */
+class CompactedItem(key: String, val automatic: Boolean, val before: Long, val after: Long?) : ChatItem(key)
 
 /**
  * The CLI isn't signed in (or the user typed /login): a card that signs it in with `claude auth login`. [retry] is

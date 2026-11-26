@@ -17,7 +17,10 @@ object TranscriptReplay {
         val reducer = ChatEventReducer(state)
         entries.forEach { entry ->
             if (entry.get("isSidechain")?.asBoolean == true || entry.get("isMeta")?.asBoolean == true) return@forEach
+            // The summary a compaction left for Claude reads like a user message; the divider stands for it.
+            if (entry.get("isCompactSummary")?.asBoolean == true) return@forEach
             when (entry.str("type")) {
+                "system" -> if (entry.str("subtype") == "compact_boundary") reducer.handle(entry)
                 "user" -> {
                     val sent = sentText(entry)
                     if (sent != null) {

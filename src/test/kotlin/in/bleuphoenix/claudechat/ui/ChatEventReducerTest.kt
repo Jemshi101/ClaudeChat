@@ -3,6 +3,7 @@ package `in`.bleuphoenix.claudechat.ui
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import `in`.bleuphoenix.claudechat.review.ReviewState
+import `in`.bleuphoenix.claudechat.ui.compose.compactedLabel
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertSame
@@ -388,5 +389,40 @@ class ChatEventReducerTest {
         assertEquals(null, reducer.lastMessageUuid)
         assertTrue(state.items.first() is NoticeItem)
         assertTrue(state.items.none { it is UserItem || it is AssistantTextItem })
+    }
+
+    @Test
+    fun `compaction shows as a divider and shrinks the context`() {
+        state.context = ContextUsage(412_000, 1_000_000)
+        state.longChatHintDismissed = true
+        reducer.addUserMessage("go")
+        event("""{"type":"system","subtype":"status","status":"compacting"}""")
+        assertEquals("Compacting the conversation…", state.status)
+        event("""{"type":"system","subtype":"compact_boundary","compact_metadata":{"trigger":"auto","pre_tokens":412000,"post_tokens":38000,"duration_ms":51000}}""")
+        val divider = state.items.filterIsInstance<CompactedItem>().single()
+        assertTrue(divider.automatic)
+        assertEquals("Context compacted automatically · 412k → 38k tokens", compactedLabel(divider))
+        assertEquals(ContextUsage(38_000, 1_000_000), state.context)
+        assertFalse(state.longChatHintDismissed)
+    }
+
+    @Test
+    fun `a typed compact is labelled as such, and a failure shows why`() {
+        reducer.addUserMessage("/compact")
+        event("""{"type":"system","subtype":"compact_boundary","compact_metadata":{"trigger":"manual","pre_tokens":90500}}""")
+        assertEquals("Context compacted · was 90.5k tokens", compactedLabel(state.items.filterIsInstance<CompactedItem>().single()))
+        event("""{"type":"system","subtype":"status","status":null,"compact_result":"failed","compact_error":"Not enough messages to compact."}""")
+        val notice = state.items.filterIsInstance<NoticeItem>().single()
+        assertTrue(notice.isError)
+        assertEquals("Couldn't compact the conversation: Not enough messages to compact.", notice.text)
+    }
+
+    @Test
+    fun `a chat is long from 200k tokens, or half a smaller window`() {
+        assertFalse(ContextUsage(199_000, 1_000_000).isLong)
+        assertTrue(ContextUsage(200_000, 1_000_000).isLong)
+        assertTrue(ContextUsage(100_000, 200_000).isLong)
+        assertFalse(ContextUsage(99_000, 200_000).isLong)
+        assertTrue(ContextUsage(250_000, null).isLong)
     }
 }

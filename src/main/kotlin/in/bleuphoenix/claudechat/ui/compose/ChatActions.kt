@@ -124,6 +124,15 @@ interface ChatActions {
     /** Tries connecting to an MCP server that failed again. */
     fun reconnectMcp(name: String) = Unit
 
+    /** Sends `/compact`: the CLI replaces the conversation so far with a summary (queued while Claude works). */
+    fun compact() = Unit
+
+    /** Puts `/compact ` in the message box, for the user to say what the summary should keep. */
+    fun compactWithFocus() = Unit
+
+    /** Opens a new chat tab. */
+    fun newChat() = Unit
+
     fun openHistory()
     fun closeHistory()
 

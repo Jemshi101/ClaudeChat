@@ -79,6 +79,18 @@ class ChatScreenRenderTest {
     }
 
     @Test
+    fun `compaction divider and the long-chat bar`() {
+        val state = sampleConversation()
+        val reducer = ChatEventReducer(state)
+        reducer.addUserMessage("go")
+        reducer.handle(JsonParser.parseString("""{"type":"system","subtype":"compact_boundary","compact_metadata":{"trigger":"auto","pre_tokens":412000,"post_tokens":38000}}""").asJsonObject)
+        reducer.endTurn()
+        state.context = ContextUsage(236_000, 1_000_000)
+        render("compacted-dark", state, dark = true, heightDp = 640)
+        render("compacted-light", state, dark = false, heightDp = 640)
+    }
+
+    @Test
     fun `sign-in card`() {
         val state = ChatState()
         val reducer = ChatEventReducer(state)

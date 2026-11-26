@@ -103,6 +103,8 @@ object ClaudeCli {
         effort: String? = null,
         /** `--max-turns`; null or 0 for no limit. */
         maxTurns: Int? = null,
+        /** `--autocompact` window in tokens; null or 0 for the CLI's own choice. */
+        autoCompactWindow: Int? = null,
     ): GeneralCommandLine {
         val args = mutableListOf(
             executable,
@@ -124,6 +126,7 @@ object ClaudeCli {
         if (tools != null) args += listOf("--tools", tools)
         if (effort != null) args += listOf("--effort", effort)
         if (maxTurns != null && maxTurns > 0) args += listOf("--max-turns", maxTurns.toString())
+        if (autoCompactWindow != null && autoCompactWindow > 0) args += listOf("--autocompact", autoCompactWindow.toString())
         return GeneralCommandLine(args)
             .withWorkDirectory(workDir)
             // CONSOLE loads the login-shell environment on macOS, so tools Claude runs (git, gradle, ...) resolve.

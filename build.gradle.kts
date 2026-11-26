@@ -9,7 +9,7 @@ plugins {
 }
 
 group = "in.bleuphoenix.claudechat"
-version = "2.51.1"
+version = "2.52.0"
 
 repositories {
     mavenCentral()
@@ -64,6 +64,10 @@ intellijPlatform {
         }
         changeNotes = recentNotes("""
             <ul>
+              <li>2.52.0: Long chats. When Claude Code compacts a chat (replaces it with a summary), a line shows where,
+                  with the size before and after, also in chats reopened from history. Click the context ring for
+                  Compact now, or Compact keeping something in focus. From 200k tokens a bar offers Compact now or a
+                  new chat. New setting: Compact the conversation at, Auto or a fixed 200k to 500k tokens.</li>
               <li>2.51.1: A new screenshot in the description: Debug mode with its reproduction steps, beside Fix with
                   Claude and Apply on a code block.</li>
               <li>2.51.0: The same failure several times in a row shows once with a count: a command Claude retries

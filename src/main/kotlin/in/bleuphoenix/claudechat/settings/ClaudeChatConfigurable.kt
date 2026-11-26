@@ -121,6 +121,15 @@ class ClaudeChatConfigurable : BoundConfigurable("Claude Chat Suite") {
                             "and waits for you. 0 for no limit.",
                     )
             }
+            row("Compact the conversation at:") {
+                comboBox(COMPACT_WINDOWS, textListCellRenderer { it?.let(::compactWindowLabel) })
+                    .bindItem({ options.autoCompactWindow.takeIf { it in COMPACT_WINDOWS } ?: 0 }, { options.autoCompactWindow = it ?: 0 })
+                    .comment(
+                        "When Claude Code replaces a long chat with a summary. Auto lets it choose for the model, often " +
+                            "200k–600k tokens; a fixed size compacts sooner but more often. Chats started after Apply use " +
+                            "it. Any chat can also be compacted from the context ring under the message box.",
+                    )
+            }
             row {
                 checkBox("Bold the key points in replies and plans")
                     .bindSelected({ options.emphasisInReplies }, { options.emphasisInReplies = it })
@@ -239,5 +248,10 @@ class ClaudeChatConfigurable : BoundConfigurable("Claude Chat Suite") {
             "ClaudeChat.InlineEdit" to "Edit with Claude",
             "ClaudeChat.ToggleActivity" to "Toggle Claude Chat Activity",
         )
+
+        /** Auto-compact windows offered, in tokens; 0 is the CLI's own choice. */
+        val COMPACT_WINDOWS = listOf(0, 200_000, 300_000, 400_000, 500_000)
+
+        fun compactWindowLabel(tokens: Int) = if (tokens == 0) "Auto (recommended)" else "${tokens / 1000}k tokens"
     }
 }

@@ -46,6 +46,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import `in`.bleuphoenix.claudechat.ui.ChatItem
+import `in`.bleuphoenix.claudechat.ui.CompactedItem
 import `in`.bleuphoenix.claudechat.ui.ChatState
 import `in`.bleuphoenix.claudechat.ui.DebugMode
 import `in`.bleuphoenix.claudechat.ui.ToolItem
@@ -165,7 +166,7 @@ private fun spacingAbove(above: ChatItem?, item: ChatItem) = when {
     above == null -> 0.dp
     above is ToolItem && item is ToolItem -> 5.dp
     item is TurnMetaItem -> 4.dp
-    item is UserItem -> 22.dp
+    item is UserItem || item is CompactedItem || above is CompactedItem -> 22.dp
     else -> 12.dp
 }
 

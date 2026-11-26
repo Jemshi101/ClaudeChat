@@ -274,7 +274,7 @@ class ClaudeSession(private val workDir: String, private val listener: Listener)
         ).joinToString("\n\n").ifEmpty { null }
         val fork = forkAtMessage
         val tools = TaskTools.toolsArgument(options.taskList, options.builtInTools, options.builtInToolsVersion, options.lastCliVersion)
-        val commandLine = ClaudeCli.commandLine(executable, workDir, sessionId, permissionMode, model, null, fork, tools, effort, options.maxTurns)
+        val commandLine = ClaudeCli.commandLine(executable, workDir, sessionId, permissionMode, model, null, fork, tools, effort, options.maxTurns, options.autoCompactWindow)
         val instructions = InstructionFiles.apply(commandLine, workDir, options.instructionFiles, prompt)
         if (instructions.isNotEmpty()) LOG.info("Instructions instead of CLAUDE.md: ${instructions.joinToString { it.path }}")
         // API keys for MCP servers, kept in the keychain; the config refers to them by variable (see McpKeys).

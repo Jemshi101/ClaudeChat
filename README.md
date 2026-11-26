@@ -263,6 +263,14 @@ NOTICE or README, and in its description or About text.
 - **Repeated failures** show once with a count: when Claude retries a command that fails the same way several times
   in a row, or the same error repeats, the chat shows the last one with **3×** (hover for what it means). The
   activity strip and history keep every call.
+- **Long chats:** every message sends the whole conversation again, so long chats get slower, costlier and less
+  focused. Claude Code compacts a chat on its own when it gets long (it replaces the conversation with a summary);
+  the chat marks the spot with a line such as "Context compacted automatically · 412k → 38k tokens", also in chats
+  reopened from history. Click the context ring next to the send button for **Compact now**, or **Compact, keeping
+  in focus…**, which puts `/compact ` in the box to finish with what the summary must keep. From 200k tokens (or half
+  a smaller window) a bar above the message box offers **Compact now** or a **New chat**; ✕ hides it until the next
+  compaction. **Compact the conversation at** (Settings) sets when Claude Code compacts on its own: Auto
+  (recommended; the CLI chooses for the model, often 200k–600k tokens) or a fixed 200k to 500k (`--autocompact`).
 - **File links:** `path/File.kt:42` in replies and file paths on tool cards open in the editor.
 - Open editors are saved before each message; files Claude changes are refreshed in the editor.
 

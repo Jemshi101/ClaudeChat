@@ -49,6 +49,9 @@ class ClaudeChatSettings : SimplePersistentStateComponent<ClaudeChatSettings.Opt
         /** `--max-turns` for chats: the steps Claude takes for one message before stopping; 0 for no limit. */
         var maxTurns by property(0)
 
+        /** `--autocompact` for chats: compact the conversation at this many tokens; 0 for the CLI's own choice (auto). */
+        var autoCompactWindow by property(0)
+
         /** Chat text size, in percent of the IDE's (see [`in`.bleuphoenix.claudechat.ui.compose.ChatAppearance]). */
         var chatFontPercent by property(100)
 

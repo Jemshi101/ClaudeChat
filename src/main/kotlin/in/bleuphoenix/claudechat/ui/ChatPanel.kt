@@ -447,6 +447,17 @@ class ChatPanel(
         state.focusRequests++
     }
 
+    override fun compact() = ask(COMPACT, emptyList())
+
+    override fun compactWithFocus() {
+        val typed = state.input.text.toString().trim()
+        val focus = typed.removePrefix(COMPACT).trim()
+        state.input.setTextAndPlaceCursorAtEnd("$COMPACT $focus".trimEnd() + " ")
+        state.focusRequests++
+    }
+
+    override fun newChat() = ClaudeChatToolWindowFactory.withChat(project, newChat = true) { it.focusInput() }
+
     // ---- Message actions ------------------------------------------------------------------------------------------
 
     override fun copyText(text: String) = ide.copyToClipboard(text)
@@ -1150,6 +1161,8 @@ class ChatPanel(
                 "don't present the plan again until they reply."
 
         const val ASK = "ask"
+
+        const val COMPACT = "/compact"
 
         /** Tools that change files or run commands: declined in Ask mode when the CLI asks to run them. */
         val ASK_MODE_DECLINED = setOf("Edit", "MultiEdit", "Write", "NotebookEdit", "Bash", "PowerShell")
