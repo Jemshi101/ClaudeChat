@@ -48,6 +48,8 @@ import `in`.bleuphoenix.claudechat.ui.compose.filesLabel
 import org.jetbrains.annotations.VisibleForTesting
 import com.intellij.openapi.options.ShowSettingsUtil
 import `in`.bleuphoenix.claudechat.settings.McpServersConfigurable
+import `in`.bleuphoenix.claudechat.settings.ClaudeChatConfigurable
+import `in`.bleuphoenix.claudechat.voice.VoiceController
 import org.jetbrains.jewel.bridge.JewelComposePanel
 import org.jetbrains.jewel.intui.markdown.bridge.ProvideMarkdownStyling
 import java.awt.datatransfer.Transferable
@@ -457,6 +459,16 @@ class ChatPanel(
     }
 
     override fun newChat() = ClaudeChatToolWindowFactory.withChat(project, newChat = true) { it.focusInput() }
+
+    // ---- Voice input ----------------------------------------------------------------------------------------------
+
+    private val voice by lazy { VoiceController(state, ::background, ::onEdt) }
+
+    override fun toggleVoice() = voice.toggle()
+
+    override fun cancelVoice() = voice.cancel()
+
+    override fun openVoiceSettings() = ShowSettingsUtil.getInstance().showSettingsDialog(project, ClaudeChatConfigurable::class.java)
 
     // ---- Message actions ------------------------------------------------------------------------------------------
 
@@ -1125,6 +1137,7 @@ class ChatPanel(
 
     override fun dispose() {
         disposed = true
+        voice.cancel()
         notifier.clear()
         flushTimer.stop()
         pendingPlanPaths.forEach(plans::resolve)

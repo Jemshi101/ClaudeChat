@@ -27,6 +27,13 @@ import `in`.bleuphoenix.claudechat.cli.CliCatalog
 import `in`.bleuphoenix.claudechat.cli.Effort
 import `in`.bleuphoenix.claudechat.ui.ChatNotifier
 import `in`.bleuphoenix.claudechat.ui.PermissionMode
+import `in`.bleuphoenix.claudechat.voice.VoiceEngine
+import `in`.bleuphoenix.claudechat.voice.Whisper
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
+import com.intellij.util.io.HttpRequests
+import java.io.File
 
 /** Settings → Tools → Claude Chat. */
 class ClaudeChatConfigurable : BoundConfigurable("Claude Chat Suite") {
@@ -34,6 +41,9 @@ class ClaudeChatConfigurable : BoundConfigurable("Claude Chat Suite") {
     private val options = ClaudeChatSettings.options
     private lateinit var pathField: TextFieldWithBrowseButton
     private lateinit var testResult: JBLabel
+    private lateinit var whisperField: TextFieldWithBrowseButton
+    private lateinit var modelBox: javax.swing.JComboBox<Whisper.Model>
+    private lateinit var whisperStatus: JBLabel
 
     override fun createPanel(): DialogPanel = panel {
         group("Claude CLI") {
@@ -179,6 +189,38 @@ class ClaudeChatConfigurable : BoundConfigurable("Claude Chat Suite") {
                     .comment("Of the IDE's text size, for messages, code and the message box. Open chats change at once.")
             }
         }
+        group("Voice Input") {
+            row("Speech to text:") {
+                comboBox(VoiceEngine.entries, textListCellRenderer { it?.label })
+                    .bindItem({ VoiceEngine.of(options.voiceInput) }, { options.voiceInput = (it ?: VoiceEngine.AUTO).id })
+                    .comment(
+                        "The mic button next to the send button. Local Whisper records and transcribes on this computer; " +
+                            "nothing is sent anywhere. System dictation is macOS Dictation (turn it on in System Settings → " +
+                            "Keyboard) or Windows voice typing.",
+                    )
+            }
+            row("whisper-cli:") {
+                whisperField = textFieldWithBrowseButton(
+                    FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor().withTitle("Select whisper-cli"),
+                )
+                    .bindText({ options.whisperPath.orEmpty() }, { options.whisperPath = it.trim().ifEmpty { null } })
+                    .align(AlignX.FILL)
+                    .comment("Leave empty to find it on the PATH or in Homebrew. Install with <code>brew install whisper-cpp</code>.")
+                    .component
+                (whisperField.textField as? JBTextField)?.emptyText?.text = Whisper.findExecutable(null)?.path ?: "Not installed"
+            }
+            row("Whisper model:") {
+                modelBox = comboBox(Whisper.MODELS, textListCellRenderer { it?.label })
+                    .bindItem(
+                        { Whisper.MODELS.firstOrNull { it.name == options.whisperModel } ?: Whisper.MODELS.first() },
+                        { options.whisperModel = (it ?: Whisper.MODELS.first()).name },
+                    )
+                    .component
+                modelBox.addActionListener { updateWhisperStatus() }
+                button("Download") { downloadModel() }
+            }
+            row { whisperStatus = cell(JBLabel()).component }
+        }
         group("Notifications") {
             row {
                 checkBox("When Claude finishes")
@@ -213,6 +255,46 @@ class ClaudeChatConfigurable : BoundConfigurable("Claude Chat Suite") {
             }
             row { comment("Change them in Settings → Keymap (search for \"Claude\").") }
         }
+    }.also { updateWhisperStatus() }
+
+    private fun selectedModel(): Whisper.Model = modelBox.selectedItem as? Whisper.Model ?: Whisper.MODELS.first()
+
+    /** Says whether whisper-cli and the chosen model are there. */
+    private fun updateWhisperStatus() {
+        val model = selectedModel()
+        val found = Whisper.findModel(model.name)
+        val executable = Whisper.findExecutable(whisperField.text.trim().ifEmpty { null })
+        whisperStatus.text = listOf(
+            executable?.let { "whisper-cli found" } ?: "whisper-cli not found",
+            found?.let { "${model.name} model ready" } ?: "${model.name} model not downloaded",
+        ).joinToString(" · ")
+    }
+
+    /** Downloads the chosen model from whisper.cpp's Hugging Face page into the IDE's system folder. */
+    private fun downloadModel() {
+        val model = selectedModel()
+        val target = File(Whisper.modelDir(), model.fileName)
+        val partial = File(Whisper.modelDir(), model.fileName + ".part")
+        ProgressManager.getInstance().run(object : Task.Modal(null, "Downloading Whisper ${model.name}", true) {
+            override fun run(indicator: ProgressIndicator) {
+                Whisper.modelDir().mkdirs()
+                HttpRequests.request(model.url).saveToFile(partial, indicator)
+                if (!partial.renameTo(target)) error("Couldn't save ${target.path}")
+            }
+
+            override fun onThrowable(error: Throwable) {
+                partial.delete()
+                whisperStatus.text = "Download failed: ${error.message}"
+            }
+
+            override fun onCancel() {
+                partial.delete()
+            }
+
+            override fun onFinished() {
+                if (target.isFile) updateWhisperStatus()
+            }
+        })
     }
 
     /** Runs `claude --version` with the path as currently typed, so it can be checked before saving. */

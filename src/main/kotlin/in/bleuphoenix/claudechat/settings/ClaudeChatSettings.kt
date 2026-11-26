@@ -98,6 +98,15 @@ class ClaudeChatSettings : SimplePersistentStateComponent<ClaudeChatSettings.Opt
         var builtInTools by string()
         var builtInToolsVersion by string()
 
+        /** How the mic button turns speech into text: a [`in`.bleuphoenix.claudechat.voice.VoiceEngine] id. */
+        var voiceInput by string("auto")
+
+        /** The Whisper model to use and download, e.g. "base.en" (see [`in`.bleuphoenix.claudechat.voice.Whisper.MODELS]). */
+        var whisperModel by string("base.en")
+
+        /** Path to whisper-cli; null means look for it on the PATH and where Homebrew installs it. */
+        var whisperPath by string()
+
         /** The CLI version the last session reported. */
         var lastCliVersion by string()
     }

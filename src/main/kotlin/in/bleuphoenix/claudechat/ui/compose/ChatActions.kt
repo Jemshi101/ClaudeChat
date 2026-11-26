@@ -35,6 +35,15 @@ interface ChatActions {
     fun openFile(path: String)
     fun openLink(url: String)
 
+    /** The mic button: starts listening, or stops and puts what was said into the message box. */
+    fun toggleVoice() = Unit
+
+    /** Stops listening and drops the recording. */
+    fun cancelVoice() = Unit
+
+    /** Opens Settings → Tools → Claude Chat Suite, where voice input is set up. */
+    fun openVoiceSettings() = Unit
+
     /** Puts a suggested prompt into the input, ready to edit or send. */
     fun suggest(prompt: String)
 

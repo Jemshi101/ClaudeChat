@@ -24,6 +24,8 @@
               one (F7 / Shift+F7 to move between them), with checkpoints to undo a whole turn.</li>
           <li><b>Context</b>: the open file, <code>@</code> files and folders, selected lines, pasted or dropped
               images, model and effort pickers, <code>/</code> commands and skills, queued messages.</li>
+          <li><b>Voice input</b>: speak your message, transcribed on your computer with Whisper, or with the
+              system's dictation.</li>
           <li><b>Edit with Claude</b>: describe a change to the selected code and review it in place.</li>
           <li><b>Right-click → Claude</b> in the editor and project tree: Explain, Find and Fix Bugs, Refactor and
               Write Tests for the selection, a file or a folder. In the Run console and Logcat, send the output to
@@ -33,6 +35,8 @@
               Claude from the changes you're committing.</li>
           <li><b>Claude Code settings</b>: edit permission rules and environment variables for the project or all
               projects, next to the MCP servers.</li>
+          <li><b>Commands, rules and memory</b>: add and edit your <code>/</code> commands, read and change the
+              <code>CLAUDE.md</code> rules and the memory Claude loads for the project.</li>
           <li><b>Notifications</b> when Claude finishes or needs you while you're in another window.</li>
         </ul>
 
@@ -111,6 +115,14 @@
                              parentId="in.bleuphoenix.claudechat.settings"
                              displayName="Claude Code Settings"
                              instance="in.bleuphoenix.claudechat.settings.ClaudeCodeSettingsConfigurable"/>
+        <projectConfigurable id="in.bleuphoenix.claudechat.settings.commands"
+                             parentId="in.bleuphoenix.claudechat.settings"
+                             displayName="Commands"
+                             instance="in.bleuphoenix.claudechat.settings.CommandsConfigurable"/>
+        <projectConfigurable id="in.bleuphoenix.claudechat.settings.rules"
+                             parentId="in.bleuphoenix.claudechat.settings"
+                             displayName="Rules &amp; Memory"
+                             instance="in.bleuphoenix.claudechat.settings.RulesAndMemoryConfigurable"/>
     </extensions>
 
     <actions>

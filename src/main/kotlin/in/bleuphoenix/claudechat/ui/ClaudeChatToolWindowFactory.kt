@@ -4,6 +4,11 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.Separator
+import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.options.ShowSettingsUtil
+import `in`.bleuphoenix.claudechat.settings.CommandsConfigurable
+import `in`.bleuphoenix.claudechat.settings.RulesAndMemoryConfigurable
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -19,8 +24,24 @@ class ClaudeChatToolWindowFactory : ToolWindowFactory, DumbAware {
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
         val tabs = createTabs(project, toolWindow)
         toolWindow.setTitleActions(listOf(NewChatAction(tabs), HistoryAction(tabs)))
-        toolWindow.setAdditionalGearActions(DefaultActionGroup(CloseChatAction(tabs), CloseOtherChatsAction(tabs)))
+        toolWindow.setAdditionalGearActions(
+            DefaultActionGroup(
+                CloseChatAction(tabs),
+                CloseOtherChatsAction(tabs),
+                Separator.getInstance(),
+                SettingsPageAction("Commands…", "View, add and edit your / commands", CommandsConfigurable::class.java),
+                SettingsPageAction("Rules & Memory…", "View and edit CLAUDE.md rules and Claude's memory for this project", RulesAndMemoryConfigurable::class.java),
+            ),
+        )
         tabs.add()
+    }
+
+    private class SettingsPageAction(text: String, description: String, private val page: Class<out Configurable>) :
+        DumbAwareAction(text, description, null) {
+
+        override fun actionPerformed(e: AnActionEvent) {
+            ShowSettingsUtil.getInstance().showSettingsDialog(e.project, page)
+        }
     }
 
     private class NewChatAction(private val tabs: ChatTabs) :

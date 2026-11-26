@@ -9,7 +9,7 @@ plugins {
 }
 
 group = "in.bleuphoenix.claudechat"
-version = "2.52.0"
+version = "2.53.0"
 
 repositories {
     mavenCentral()
@@ -64,6 +64,11 @@ intellijPlatform {
         }
         changeNotes = recentNotes("""
             <ul>
+              <li>2.53.0: Voice input, commands, rules and memory. A mic next to the send button: local Whisper records
+                  and transcribes on your computer (brew install whisper-cpp, then Download a model in Settings), or
+                  the system's dictation. New Commands page to add, edit and delete your / commands, and Rules &amp;
+                  Memory to read and change the CLAUDE.md files and the memory Claude loads, or add a rule. Both are
+                  in the Claude tool window's ⚙ menu.</li>
               <li>2.52.0: Long chats. When Claude Code compacts a chat (replaces it with a summary), a line shows where,
                   with the size before and after, also in chats reopened from history. Click the context ring for
                   Compact now, or Compact keeping something in focus. From 200k tokens a bar offers Compact now or a

@@ -91,6 +91,18 @@ class ChatScreenRenderTest {
     }
 
     @Test
+    fun `voice input listening and its setup hint`() {
+        val state = sampleConversation()
+        state.context = ContextUsage(42_000, 200_000)
+        state.voice = VoicePhase.Recording
+        state.voiceStartedAt = System.currentTimeMillis() - 7_000
+        render("voice-dark", state, dark = true, heightDp = 640)
+        state.voice = VoicePhase.Idle
+        state.voiceMessage = "Local Whisper isn't installed: run brew install whisper-cpp (or set its path in Settings → Claude Chat Suite → Voice input)."
+        render("voice-hint-light", state, dark = false, heightDp = 640)
+    }
+
+    @Test
     fun `sign-in card`() {
         val state = ChatState()
         val reducer = ChatEventReducer(state)

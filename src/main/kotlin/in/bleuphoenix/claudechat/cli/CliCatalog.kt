@@ -71,6 +71,11 @@ object CliCatalog {
     /** Models from any project's catalog read so far (they don't depend on the project); empty if none was read. */
     fun knownModels(): List<ModelOption> = byWorkDir.values.firstOrNull { it.models.isNotEmpty() }?.models.orEmpty()
 
+    /** Drops the project's cached catalog after its commands changed, so the next load asks the CLI again. */
+    fun forget(workDir: String) {
+        byWorkDir.remove(workDir)
+    }
+
     /** Records commands reported by a running chat, so new chats in the project start with them. */
     fun updateCommands(workDir: String, commands: List<SlashCommand>) {
         byWorkDir.compute(workDir) { _, old -> Catalog(old?.models.orEmpty(), commands) }

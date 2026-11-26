@@ -271,6 +271,18 @@ NOTICE or README, and in its description or About text.
   a smaller window) a bar above the message box offers **Compact now** or a **New chat**; ✕ hides it until the next
   compaction. **Compact the conversation at** (Settings) sets when Claude Code compacts on its own: Auto
   (recommended; the CLI chooses for the model, often 200k–600k tokens) or a fixed 200k to 500k (`--autocompact`).
+- **Voice input:** the mic next to the send button. With local Whisper (`brew install whisper-cpp`, then **Download**
+  a model under Settings → Voice Input) it records until you press it again or **Done**, transcribes on your
+  computer, and puts the text at the cursor; nothing is sent anywhere. Without it, the mic starts the system's
+  dictation (macOS Dictation, Windows voice typing). **Speech to text** picks one; Auto tries Whisper first.
+- **Commands** and **Rules & Memory** (the Claude tool window's ⚙ menu, or Settings → Claude Chat Suite):
+  - **Commands** lists your `/` commands, the project's (`.claude/commands`, shared with the team when committed)
+    and yours for all projects (`~/.claude/commands`), to add, edit (name, description, arguments hint, prompt) or
+    delete. Other frontmatter such as `allowed-tools` is kept.
+  - **Rules & Memory** lists what Claude reads at the start of every chat here: your `~/.claude/CLAUDE.md`, the
+    project's and its parent folders' `CLAUDE.md`, `CLAUDE.local.md`, `.claude/rules`, Instruction files, and the
+    project's memory (`MEMORY.md` and one file per fact). Double-click to read or change one, **Add Rule…** appends
+    a line to the project's, your local or your global `CLAUDE.md`, and a memory can be deleted.
 - **File links:** `path/File.kt:42` in replies and file paths on tool cards open in the editor.
 - Open editors are saved before each message; files Claude changes are refreshed in the editor.
 

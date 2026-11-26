@@ -57,6 +57,7 @@ import `in`.bleuphoenix.claudechat.ui.ChatState
 import `in`.bleuphoenix.claudechat.ui.ContextMessage
 import `in`.bleuphoenix.claudechat.ui.DebugMode
 import `in`.bleuphoenix.claudechat.ui.PermissionMode
+import `in`.bleuphoenix.claudechat.ui.VoicePhase
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.PopupMenu
 import org.jetbrains.jewel.ui.component.Text
@@ -113,6 +114,9 @@ fun Composer(state: ChatState, actions: ChatActions) {
         }
         state.context?.takeIf { it.isLong && !state.busy && !state.longChatHintDismissed }?.let { usage ->
             Box(Modifier.padding(bottom = 6.dp)) { LongChatBar(usage, actions) { state.longChatHintDismissed = true } }
+        }
+        if (state.voice != VoicePhase.Idle || state.voiceMessage != null) {
+            Box(Modifier.padding(bottom = 6.dp)) { VoiceBar(state, actions) }
         }
         // A message typed while Claude works: wait for it, send it now, or stop Claude and send it.
         if (state.busy && state.editing == null && state.input.text.isNotBlank()) {
@@ -240,6 +244,7 @@ fun Composer(state: ChatState, actions: ChatActions) {
                 Spacer(Modifier.weight(1f))
                 if (state.mcpServers.isNotEmpty()) McpIndicator(state.mcpServers, actions)
                 state.context?.let { ContextMeter(it, actions) }
+                MicButton(state.voice, actions)
                 SendButton(busy = state.busy, canSend = state.input.text.isNotBlank(), actions = actions)
             }
         }

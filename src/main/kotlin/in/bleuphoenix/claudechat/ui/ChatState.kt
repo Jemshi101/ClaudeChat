@@ -102,6 +102,15 @@ class ChatState {
     /** The long-chat bar was closed; it comes back after the next compaction, once the chat is long again. */
     var longChatHintDismissed by mutableStateOf(false)
 
+    /** What the mic button is doing. */
+    var voice by mutableStateOf(VoicePhase.Idle)
+
+    /** When the recording started, for its timer. */
+    var voiceStartedAt by mutableStateOf(0L)
+
+    /** Why voice input didn't work, or how to get it working; shown above the message box until closed. */
+    var voiceMessage by mutableStateOf<String?>(null)
+
     /** Which project guides Claude gets instead of CLAUDE.md, for the welcome screen; empty when CLAUDE.md is used. */
     var instructionsNote by mutableStateOf("")
 
@@ -209,6 +218,9 @@ class ToolItem(
 }
 
 enum class ToolStatus { Running, Succeeded, Failed }
+
+/** The mic button with local Whisper: off, listening, or turning the recording into text. */
+enum class VoicePhase { Idle, Recording, Transcribing }
 
 /** A sub-agent's progress, from the CLI's task events: what it's doing and how much it has done. */
 data class AgentProgress(
